@@ -88,7 +88,7 @@ def get_filter(element=['Al'], thick=[0.2], scan=(45, 75, 100), eV=True, plot=Tr
 
 def get_multilayer(materials=('Si','Mo','SiO2'), period=6.9, gamma=0.4, rep=40, pol=1, energy=(85, 100, 100), angle=90, eV=True, plot=True):
     """
-    1) materials = [TOP, BOTTOM, SUBSTRATE]
+    1) materials = (TOP, BOTTOM, SUBSTRATE)
     2) period in nm
     3) gamma = (bottom layer)/period
     4) (-1 < pol < 1) where s=1, p=-1 and unpolarized=0
@@ -137,20 +137,94 @@ def get_multilayer(materials=('Si','Mo','SiO2'), period=6.9, gamma=0.4, rep=40, 
             address = 'https://henke.lbl.gov' + part
     r_2 = requests.get(address)
     values = np.genfromtxt(StringIO(r_2.text), skip_header=2)
+    thick_bot = gamma*period
+    thick_top = period - thick_bot
     if np.size(energy) == 3:
+        title = '[{:s} ({:.1f} nm) | {:s} ({:.1f} nm)]x{:d} on {:s} at {:.2f} deg'.format(materials[0], thick_top, materials[1], thick_bot, rep, materials[2], angle)
         if eV:
             x_label = 'Energy (eV)'
         else:
             values[:, 0] = 1239.84/values[:, 0]
             x_label = 'Wavelength (nm)'
     else:
+        title = '[{:s} ({:.1f} nm) | {:s} ({:.1f} nm)]x{:d} on {:s} at {:.2f} eV'.format(materials[0], thick_top, materials[1], thick_bot, rep, materials[2], energy)
         x_label = 'Inc. angle (deg)'
     
     if plot:
-        thick_bot = gamma*period
-        thick_top = period - thick_bot
-        title = '[{:s} ({:.1f} nm) | {:s} ({:.1f} nm)]x{:d} on {:s}'.format(materials[0], thick_top, materials[1], thick_bot, rep, materials[2])
+        fontsize = 16
+        fig1 = plt.figure(figsize=(10, 8))
+        ax1_1 = fig1.add_subplot(1,1,1)
+        ax1_1.plot(values[:, 0], values[:, 1], '-b')
+        # ax1_1.set_ylim(0, 1)
+        ax1_1.tick_params(axis='both', labelsize=fontsize)
+        ax1_1.set_title(title, fontsize=fontsize+2)
+        ax1_1.set_xlabel(x_label, fontsize=fontsize)
+        ax1_1.set_ylabel('Reflectivity', fontsize=fontsize)
+        ax1_1.grid(True)
+        plt.tight_layout()
+        plt.show()
+    
+    return values
+
+def get_singlelayer(materials=('Au','Si'), thick=30, pol=1, energy=(85, 100, 100), angle=90, eV=True, plot=True):
+    """
+    1) materials = (LAYER, SUBSTRATE)
+    2) thickness in nm
+    3) (-1 < pol < 1) where s=1, p=-1 and unpolarized=0
+    4) The incidence angle is measured relative to the surface (NOT the surface normal)
+    5) energy in eV
+    6) angle in deg
+    """
+
+    data = {}
+    data['Layer'] = materials[0]
+    data['Ldensity'] = '-1'
+    data['Thick'] = str(thick)
+    data['Sigma1'] = '0'
+    data['Substrate'] = materials[1]
+    data['Sdensity'] = '-1'
+    data['Sigma2'] = '0'
+    data['Pol'] = str(pol)
+    if np.size(energy) == 3:
+        data['Scan'] = 'Energy'
+        data['Min'] = str(energy[0])
+        data['Max'] = str(energy[1])
+        data['Npts'] = str(energy[2])
+        data['temp'] = 'Angle+(deg)'
+        data['Fixed'] = str(angle)
+    else:
+        data['Scan'] = 'Angle'
+        data['Min'] = str(angle[0])
+        data['Max'] = str(angle[1])
+        data['Npts'] = str(angle[2])
+        data['temp'] = 'Energy+(eV)'
+        data['Fixed'] = str(energy)
+    data['Plot'] = 'Linear'
+    data['Output'] = 'Plot'
+    payload = ''
+    for key in data.keys():
+        payload += key + '=' + data[key] + '&'
+    payload = payload[:-1]
         
+    r_1 = requests.post('https://henke.lbl.gov/cgi-bin/laymir.pl', data=payload, headers={'Content-Type': 'application/x-www-form-urlencoded'})
+    splitted_text = r_1.text.split('"')
+    for part in splitted_text:
+        if '.dat' in part:
+            address = 'https://henke.lbl.gov' + part
+    r_2 = requests.get(address)
+    values = np.genfromtxt(StringIO(r_2.text), skip_header=2)
+    if np.size(energy) == 3:
+        title = '{:s} ({:.1f} nm) on {:s} at {:.2f} deg'.format(materials[0], thick, materials[1], angle)
+        if eV:
+            x_label = 'Energy (eV)'
+        else:
+            values[:, 0] = 1239.84/values[:, 0]
+            x_label = 'Wavelength (nm)'
+    else:
+        title = '{:s} ({:.1f} nm) on {:s} at {:.2f} eV'.format(materials[0], thick, materials[1], energy)
+        x_label = 'Inc. angle (deg)'
+    
+    if plot:
         fontsize = 16
         fig1 = plt.figure(figsize=(10, 8))
         ax1_1 = fig1.add_subplot(1,1,1)

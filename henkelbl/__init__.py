@@ -5,15 +5,29 @@ import matplotlib.pyplot as plt
 from io import StringIO
 import requests
 
-def binding_en(element='Fe', verbose=True):
-    r = requests.post('https://henke.lbl.gov/cgi-bin/pert_cgi.pl', data={'Element': element, 'Energy': '1000'})
-    splitted_text = r.text.split('pre>')
+def binding_en(element='Fe', input_en=100, verbose=True):
+    r = requests.post('https://henke.lbl.gov/cgi-bin/pert_cgi.pl', data={'Element': element, 'Energy': str(input_en)})
+    splitted_text = r.text.split('<li>')
     if len(splitted_text) == 1:
         print('Element not defined...')
         return {}
     else:
-        raw_energies = splitted_text[1]
         out_dict = {'Element': element}
+        out_dict['Energy']= input_en
+        for line in splitted_text:
+            if 'Delta' in line:
+                delta = float(line.split()[2])
+                out_dict['Delta'] = delta
+                if verbose:
+                    print('Delta: {:.4e}'.format(delta))
+            if 'Beta' in line:
+                beta = float(line.split()[2])
+                out_dict['Beta'] = beta
+                if verbose:
+                    print('Beta: {:.4e}'.format(beta))
+        #--------------------------------------------#
+        splitted_text = r.text.split('pre>')
+        raw_energies = splitted_text[1]
         for line in raw_energies.splitlines():
             if len(line) > 3:
                 line_parts = line.split()

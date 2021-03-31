@@ -253,3 +253,53 @@ def get_singlelayer(materials=('Au','Si'), thick=30, pol=1, energy=(85, 100, 100
         plt.show()
     
     return values
+
+def get_refrIndex(material='Fe', energy=(30, 130, 100), eV=True, plot=True):
+
+    data = {}
+    data['Material'] = 'Enter+Formula'
+    data['Formula'] = material
+    data['Density'] = '-1'
+    data['Scan'] = 'Energy'
+    data['Min'] = str(energy[0])
+    data['Max'] = str(energy[1])
+    data['Npts'] = str(energy[2])
+    data['Output'] = 'Text+File'
+    payload = ''
+    for key in data.keys():
+        payload += key + '=' + data[key] + '&'
+    payload = payload[:-1]
+        
+    r_1 = requests.post('https://henke.lbl.gov/cgi-bin/getdb.pl', data=payload, headers={'Content-Type': 'application/x-www-form-urlencoded'})
+    
+    splitted_text = r_1.text.split('"')
+    for part in splitted_text:
+        if '.dat' in part:
+            address = 'https://henke.lbl.gov' + part
+    r_2 = requests.get(address)
+    values = np.genfromtxt(StringIO(r_2.text), skip_header=2)
+    
+    if plot:
+        
+        title = 'Refractive index for {:s} (1 - Delta - i*Beta)'.format(material)
+        if eV:
+            x_label = 'Energy (eV)'
+        else:
+            values[:, 0] = 1239.84/values[:, 0]
+            x_label = 'Wavelength (nm)'
+        
+        fontsize = 16
+        fig1 = plt.figure(figsize=(10, 8))
+        ax1_1 = fig1.add_subplot(1,1,1)
+        ax1_1.semilogy(values[:, 0], values[:, 1], '-b', label='Delta')
+        ax1_1.semilogy(values[:, 0], values[:, 2], '-r', label='Beta')
+        ax1_1.tick_params(axis='both', labelsize=fontsize)
+        ax1_1.set_title(title, fontsize=fontsize+2)
+        ax1_1.set_xlabel(x_label, fontsize=fontsize)
+        ax1_1.set_ylabel('Delta, Beta', fontsize=fontsize)
+        ax1_1.grid(True)
+        ax1_1.legend(loc='best', fontsize=fontsize)
+        plt.tight_layout()
+        plt.show()
+    
+    return values

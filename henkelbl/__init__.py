@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from io import StringIO
 import requests
 
+fig_size = (8, 6)
+fontsize = 12
+
 def bindingEn(element='Fe', input_en=100, verbose=True):
     r = requests.post('https://henke.lbl.gov/cgi-bin/pert_cgi.pl', data={'Element': element, 'Energy': str(input_en)})
     splitted_text = r.text.split('<li>')
@@ -77,8 +80,7 @@ def get_filter(element=['Al'], thick=[0.2], scan=(45, 75, 100), eV=True, plot=Tr
     if plot:
         # style = plt.style.available[5]
         # plt.style.use('tableau-colorblind10')
-        fontsize = 16
-        fig1 = plt.figure(figsize=(10, 8))
+        fig1 = plt.figure(figsize=fig_size)
         ax1_1 = fig1.add_subplot(1,1,1)
         for key in output.keys():
             if eV:
@@ -165,8 +167,7 @@ def get_multiLayer(materials=('Si','Mo','SiO2'), period=6.9, gamma=0.4, rep=40, 
         x_label = 'Inc. angle (deg)'
     
     if plot:
-        fontsize = 16
-        fig1 = plt.figure(figsize=(10, 8))
+        fig1 = plt.figure(figsize=fig_size)
         ax1_1 = fig1.add_subplot(1,1,1)
         ax1_1.plot(values[:, 0], values[:, 1], '-ob')
         # ax1_1.set_ylim(0, 1)
@@ -239,8 +240,7 @@ def get_singleLayer(materials=('Au','Si'), thick=30, pol=1, energy=(85, 100, 100
         x_label = 'Inc. angle (deg)'
     
     if plot:
-        fontsize = 16
-        fig1 = plt.figure(figsize=(10, 8))
+        fig1 = plt.figure(figsize=fig_size)
         ax1_1 = fig1.add_subplot(1,1,1)
         ax1_1.plot(values[:, 0], values[:, 1], '-ob')
         # ax1_1.set_ylim(0, 1)
@@ -287,8 +287,7 @@ def get_refrIndex(material='Fe', energy=(30, 130, 100), eV=True, plot=True):
             values[:, 0] = 1239.84/values[:, 0]
             x_label = 'Wavelength (nm)'
         
-        fontsize = 16
-        fig1 = plt.figure(figsize=(10, 8))
+        fig1 = plt.figure(figsize=fig_size)
         ax1_1 = fig1.add_subplot(1,1,1)
         ax1_1.semilogy(values[:, 0], values[:, 1], '-ob', label='Delta')
         ax1_1.semilogy(values[:, 0], values[:, 2], '-or', label='Beta')
@@ -349,8 +348,7 @@ def get_attLength(material='Fe', energy=(30, 130, 100), angle=90, eV=True, plot=
         x_label = 'Inc. angle (deg)'
     
     if plot:
-        fontsize = 16
-        fig1 = plt.figure(figsize=(10, 8))
+        fig1 = plt.figure(figsize=fig_size)
         ax1_1 = fig1.add_subplot(1,1,1)
         ax1_1.plot(values[:, 0], values[:, 1], '-ob')
         ax1_1.tick_params(axis='both', labelsize=fontsize)

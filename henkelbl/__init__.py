@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from io import StringIO
 import requests
 
-def binding_en(element='Fe', input_en=100, verbose=True):
+def bindingEn(element='Fe', input_en=100, verbose=True):
     r = requests.post('https://henke.lbl.gov/cgi-bin/pert_cgi.pl', data={'Element': element, 'Energy': str(input_en)})
     splitted_text = r.text.split('<li>')
     if len(splitted_text) == 1:
@@ -100,7 +100,7 @@ def get_filter(element=['Al'], thick=[0.2], scan=(45, 75, 100), eV=True, plot=Tr
     
     return output
 
-def get_multilayer(materials=('Si','Mo','SiO2'), period=6.9, gamma=0.4, rep=40, pol=1, energy=(85, 100, 100), angle=90, eV=True, plot=True):
+def get_multiLayer(materials=('Si','Mo','SiO2'), period=6.9, gamma=0.4, rep=40, pol=1, energy=(85, 100, 100), angle=90, eV=True, plot=True):
     """
     1) materials = (TOP, BOTTOM, SUBSTRATE)
     2) period in nm
@@ -168,7 +168,7 @@ def get_multilayer(materials=('Si','Mo','SiO2'), period=6.9, gamma=0.4, rep=40, 
         fontsize = 16
         fig1 = plt.figure(figsize=(10, 8))
         ax1_1 = fig1.add_subplot(1,1,1)
-        ax1_1.plot(values[:, 0], values[:, 1], '-b')
+        ax1_1.plot(values[:, 0], values[:, 1], '-ob')
         # ax1_1.set_ylim(0, 1)
         ax1_1.tick_params(axis='both', labelsize=fontsize)
         ax1_1.set_title(title, fontsize=fontsize+2)
@@ -180,7 +180,7 @@ def get_multilayer(materials=('Si','Mo','SiO2'), period=6.9, gamma=0.4, rep=40, 
     
     return values
 
-def get_singlelayer(materials=('Au','Si'), thick=30, pol=1, energy=(85, 100, 100), angle=90, eV=True, plot=True):
+def get_singleLayer(materials=('Au','Si'), thick=30, pol=1, energy=(85, 100, 100), angle=90, eV=True, plot=True):
     """
     1) materials = (LAYER, SUBSTRATE)
     2) thickness in nm
@@ -242,7 +242,7 @@ def get_singlelayer(materials=('Au','Si'), thick=30, pol=1, energy=(85, 100, 100
         fontsize = 16
         fig1 = plt.figure(figsize=(10, 8))
         ax1_1 = fig1.add_subplot(1,1,1)
-        ax1_1.plot(values[:, 0], values[:, 1], '-b')
+        ax1_1.plot(values[:, 0], values[:, 1], '-ob')
         # ax1_1.set_ylim(0, 1)
         ax1_1.tick_params(axis='both', labelsize=fontsize)
         ax1_1.set_title(title, fontsize=fontsize+2)
@@ -280,7 +280,6 @@ def get_refrIndex(material='Fe', energy=(30, 130, 100), eV=True, plot=True):
     values = np.genfromtxt(StringIO(r_2.text), skip_header=2)
     
     if plot:
-        
         title = 'Refractive index for {:s} (1 - Delta - i*Beta)'.format(material)
         if eV:
             x_label = 'Energy (eV)'
@@ -291,14 +290,74 @@ def get_refrIndex(material='Fe', energy=(30, 130, 100), eV=True, plot=True):
         fontsize = 16
         fig1 = plt.figure(figsize=(10, 8))
         ax1_1 = fig1.add_subplot(1,1,1)
-        ax1_1.semilogy(values[:, 0], values[:, 1], '-b', label='Delta')
-        ax1_1.semilogy(values[:, 0], values[:, 2], '-r', label='Beta')
+        ax1_1.semilogy(values[:, 0], values[:, 1], '-ob', label='Delta')
+        ax1_1.semilogy(values[:, 0], values[:, 2], '-or', label='Beta')
         ax1_1.tick_params(axis='both', labelsize=fontsize)
         ax1_1.set_title(title, fontsize=fontsize+2)
         ax1_1.set_xlabel(x_label, fontsize=fontsize)
         ax1_1.set_ylabel('Delta, Beta', fontsize=fontsize)
         ax1_1.grid(True)
         ax1_1.legend(loc='best', fontsize=fontsize)
+        plt.tight_layout()
+        plt.show()
+    
+    return values
+
+def get_attLength(material='Fe', energy=(30, 130, 100), angle=90, eV=True, plot=True):
+
+    data = {}
+    data['Material'] = 'Enter+Formula'
+    data['Formula'] = material
+    data['Density'] = '-1'
+    if np.size(energy) == 3:
+        data['Scan'] = 'Energy'
+        data['Min'] = str(energy[0])
+        data['Max'] = str(energy[1])
+        data['Npts'] = str(energy[2])
+        data['temp'] = 'Angle+(deg)'
+        data['Fixed'] = str(angle)
+    else:
+        data['Scan'] = 'Angle'
+        data['Min'] = str(angle[0])
+        data['Max'] = str(angle[1])
+        data['Npts'] = str(angle[2])
+        data['temp'] = 'Energy+(eV)'
+        data['Fixed'] = str(energy)
+    data['Plot'] = 'Linear'
+    data['Output'] = 'Plot'
+    payload = ''
+    for key in data.keys():
+        payload += key + '=' + data[key] + '&'
+    payload = payload[:-1]
+        
+    r_1 = requests.post('https://henke.lbl.gov/cgi-bin/atten.pl', data=payload, headers={'Content-Type': 'application/x-www-form-urlencoded'})
+    splitted_text = r_1.text.split('"')
+    for part in splitted_text:
+        if '.dat' in part:
+            address = 'https://henke.lbl.gov' + part
+    r_2 = requests.get(address)
+    values = np.genfromtxt(StringIO(r_2.text), skip_header=2)
+    if np.size(energy) == 3:
+        title = 'Attenuation length for {:s} at {:.2f} deg'.format(material, angle)
+        if eV:
+            x_label = 'Energy (eV)'
+        else:
+            values[:, 0] = 1239.84/values[:, 0]
+            x_label = 'Wavelength (nm)'
+    else:
+        title = 'Attenuation length for {:s} at {:.2f} deg'.format(material, energy)
+        x_label = 'Inc. angle (deg)'
+    
+    if plot:
+        fontsize = 16
+        fig1 = plt.figure(figsize=(10, 8))
+        ax1_1 = fig1.add_subplot(1,1,1)
+        ax1_1.plot(values[:, 0], values[:, 1], '-ob')
+        ax1_1.tick_params(axis='both', labelsize=fontsize)
+        ax1_1.set_title(title, fontsize=fontsize+2)
+        ax1_1.set_xlabel(x_label, fontsize=fontsize)
+        ax1_1.set_ylabel('Attenuation length (um)', fontsize=fontsize)
+        ax1_1.grid(True)
         plt.tight_layout()
         plt.show()
     

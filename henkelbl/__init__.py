@@ -102,6 +102,93 @@ def get_filter(element=['Al'], thick=[0.2], scan=(45, 75, 100), eV=True, plot=Tr
     
     return output
 
+def get_thickMirror(element=['Al'], roughness=[0], pol=[1], energy=(85, 100, 100), angle=90, eV=True, plot=True):
+    """
+    1) Elements - list
+    2) RMS roughnesses (nm) - list
+    3) (-1 < pol < 1) where s=1, p=-1 and unpolarized=0 - list
+    4) The incidence angle is measured relative to the surface (NOT the surface normal)
+    5) energy in eV
+    6) angle in deg
+    """
+    
+    data = {}
+    output = {}
+    for i in range(len(element)):
+        print('Progress: {:.1f} %'.format(1e2*(i+1)/len(element)))
+        data['Material'] = 'Enter+Formula'
+        data['Formula'] = element[i]
+        data['Density'] = '-1'
+        data['Sigma'] = str(roughness[i])
+        data['Pol'] = str(pol[i])
+        if np.size(energy) == 3:
+            data['Scan'] = 'Energy'
+            data['Min'] = str(energy[0])
+            data['Max'] = str(energy[1])
+            data['Npts'] = str(energy[2])
+            data['temp'] = 'Angle+(deg)'
+            data['Fixed'] = str(angle)
+        else:
+            data['Scan'] = 'Angle'
+            data['Min'] = str(angle[0])
+            data['Max'] = str(angle[1])
+            data['Npts'] = str(angle[2])
+            data['temp'] = 'Energy+(eV)'
+            data['Fixed'] = str(energy)
+        data['Plot'] = 'Linear'
+        data['Output'] = 'Plot'
+        payload = ''
+        for key in data.keys():
+            payload += key + '=' + data[key] + '&'
+        payload = payload[:-1]
+        
+        r_1 = requests.post('https://henke.lbl.gov/cgi-bin/mirror.pl', data=payload, headers={'Content-Type': 'application/x-www-form-urlencoded'})
+        splitted_text = r_1.text.split('"')
+        for part in splitted_text:
+            if '.dat' in part:
+                address = 'https://henke.lbl.gov' + part
+        r_2 = requests.get(address)
+        values = np.genfromtxt(StringIO(r_2.text), skip_header=2)
+        key = element[i] + '_{:03d}'.format(i)
+        output[key] = {}
+        output[key]['Element'] = element[i]
+        output[key]['Roughness'] = roughness[i]
+        output[key]['Polarization'] = pol[i]
+        output[key]['Energy'] = values[:, 0]
+        output[key]['Wavelength'] = 1239.84/values[:, 0]
+        output[key]['Reflectivity'] = values[:, 1]
+    
+    if plot:
+        # style = plt.style.available[5]
+        # plt.style.use('tableau-colorblind10')
+        fig1 = plt.figure(figsize=fig_size)
+        ax1_1 = fig1.add_subplot(1,1,1)
+        for key in output.keys():
+            if eV:
+                x_axis = output[key]['Energy']
+                x_label = 'Energy (eV)'
+            else:
+                x_axis = output[key]['Wavelength']
+                x_label = 'Wavelength (nm)'
+            if output[key]['Polarization'] > 0.5:
+                lab_pol = 'S'
+            elif output[key]['Polarization'] < -0.5:
+                lab_pol = 'P'
+            else:
+                lab_pol = 'UP'
+            label = output[key]['Element'] + ' - {:.1f} nm - {:s}'.format(output[key]['Roughness'], lab_pol)
+            ax1_1.plot(x_axis, output[key]['Reflectivity'], '-o', label=label)
+        ax1_1.set_ylim(0, 1)
+        ax1_1.tick_params(axis='both', labelsize=fontsize)
+        ax1_1.set_xlabel(x_label, fontsize=fontsize)
+        ax1_1.set_ylabel('Reflectivity', fontsize=fontsize)
+        ax1_1.legend(loc='best', fontsize=fontsize)
+        ax1_1.grid(True)
+        plt.tight_layout()
+        plt.show()
+    
+    return output
+
 def get_multiLayer(materials=('Si','Mo','SiO2'), period=6.9, gamma=0.4, rep=40, pol=1, energy=(85, 100, 100), angle=90, eV=True, plot=True):
     """
     1) materials = (TOP, BOTTOM, SUBSTRATE)

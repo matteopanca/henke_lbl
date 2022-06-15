@@ -42,14 +42,17 @@ def bindingEn(element='Fe', input_en=100, verbose=True):
                     print('{:s}: {:.3f} eV ({:.3f} nm)'.format(edge, energy, wavelen))
         return out_dict
 
-def get_filter(element=['Al'], thick=[0.2], scan=(45, 75, 100), eV=True, plot=True):
+def get_filter(element=['Al'], thick=[0.2], scan=(45, 75, 100), density=None, eV=True, plot=True):
     data = {}
     output = {}
     for i in range(len(element)):
         print('Progress: {:.1f} %'.format(1e2*(i+1)/len(element)))
         data['Material'] = 'Enter+Formula'
         data['Formula'] = element[i]
-        data['Density'] = '-1'
+        if density is None:
+            data['Density'] = '-1' #enter negative number to use tabulated values
+        else:
+            data['Density'] = density[i] #gm/cm^3
         data['Thickness'] = str(thick[i])
         data['Scan'] = 'Energy'
         data['Min'] = str(scan[0])
@@ -102,7 +105,7 @@ def get_filter(element=['Al'], thick=[0.2], scan=(45, 75, 100), eV=True, plot=Tr
     
     return output
 
-def get_thickMirror(element=['Al'], roughness=[0], pol=[1], energy=(85, 100, 100), angle=90, eV=True, plot=True):
+def get_thickMirror(element=['Al'], roughness=[0], pol=[1], energy=(85, 100, 100), angle=90, density=None, eV=True, plot=True):
     """
     1) Elements - list
     2) RMS roughnesses (nm) - list
@@ -118,7 +121,10 @@ def get_thickMirror(element=['Al'], roughness=[0], pol=[1], energy=(85, 100, 100
         print('Progress: {:.1f} %'.format(1e2*(i+1)/len(element)))
         data['Material'] = 'Enter+Formula'
         data['Formula'] = element[i]
-        data['Density'] = '-1'
+        if density is None:
+            data['Density'] = '-1' #enter negative number to use tabulated values
+        else:
+            data['Density'] = density[i] #gm/cm^3
         data['Sigma'] = str(roughness[i])
         data['Pol'] = str(pol[i])
         if np.size(energy) == 3:
@@ -341,12 +347,15 @@ def get_singleLayer(materials=('Au','Si'), thick=30, pol=1, energy=(85, 100, 100
     
     return values
 
-def get_refrIndex(material='Fe', energy=(30, 130, 100), eV=True, plot=True):
+def get_refrIndex(material='Fe', energy=(30, 130, 100), density=None, eV=True, plot=True):
 
     data = {}
     data['Material'] = 'Enter+Formula'
     data['Formula'] = material
-    data['Density'] = '-1'
+    if density is None:
+        data['Density'] = '-1' #enter negative number to use tabulated values
+    else:
+        data['Density'] = density #gm/cm^3
     data['Scan'] = 'Energy'
     data['Min'] = str(energy[0])
     data['Max'] = str(energy[1])
@@ -389,12 +398,15 @@ def get_refrIndex(material='Fe', energy=(30, 130, 100), eV=True, plot=True):
     
     return values
 
-def get_attLength(material='Fe', energy=(30, 130, 100), angle=90, eV=True, plot=True):
+def get_attLength(material='Fe', energy=(30, 130, 100), angle=90, density=None, eV=True, plot=True):
 
     data = {}
     data['Material'] = 'Enter+Formula'
     data['Formula'] = material
-    data['Density'] = '-1'
+    if density is None:
+        data['Density'] = '-1' #enter negative number to use tabulated values
+    else:
+        data['Density'] = density #gm/cm^3
     if np.size(energy) == 3:
         data['Scan'] = 'Energy'
         data['Min'] = str(energy[0])

@@ -52,7 +52,7 @@ def get_filter(element=['Al'], thick=[0.2], scan=(45, 75, 100), density=None, eV
         if density is None:
             data['Density'] = '-1' #enter negative number to use tabulated values
         else:
-            data['Density'] = density[i] #gm/cm^3
+            data['Density'] = str(density[i]) #gm/cm^3
         data['Thickness'] = str(thick[i])
         data['Scan'] = 'Energy'
         data['Min'] = str(scan[0])
@@ -124,7 +124,7 @@ def get_thickMirror(element=['Al'], roughness=[0], pol=[1], energy=(85, 100, 100
         if density is None:
             data['Density'] = '-1' #enter negative number to use tabulated values
         else:
-            data['Density'] = density[i] #gm/cm^3
+            data['Density'] = str(density[i]) #gm/cm^3
         data['Sigma'] = str(roughness[i])
         data['Pol'] = str(pol[i])
         if np.size(energy) == 3:
@@ -355,7 +355,7 @@ def get_refrIndex(material='Fe', energy=(30, 130, 100), density=None, eV=True, p
     if density is None:
         data['Density'] = '-1' #enter negative number to use tabulated values
     else:
-        data['Density'] = density #gm/cm^3
+        data['Density'] = str(density) #gm/cm^3
     data['Scan'] = 'Energy'
     data['Min'] = str(energy[0])
     data['Max'] = str(energy[1])
@@ -406,7 +406,7 @@ def get_attLength(material='Fe', energy=(30, 130, 100), angle=90, density=None, 
     if density is None:
         data['Density'] = '-1' #enter negative number to use tabulated values
     else:
-        data['Density'] = density #gm/cm^3
+        data['Density'] = str(density) #gm/cm^3
     if np.size(energy) == 3:
         data['Scan'] = 'Energy'
         data['Min'] = str(energy[0])

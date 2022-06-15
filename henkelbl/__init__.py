@@ -97,7 +97,7 @@ def get_filter(element=['Al'], thick=[0.2], scan=(45, 75, 100), density=None, eV
         ax1_1.set_ylim(0, 1)
         ax1_1.tick_params(axis='both', labelsize=fontsize)
         ax1_1.set_xlabel(x_label, fontsize=fontsize)
-        ax1_1.set_ylabel('Transmittivity', fontsize=fontsize)
+        ax1_1.set_ylabel('Transmission', fontsize=fontsize)
         ax1_1.legend(loc='best', fontsize=fontsize)
         ax1_1.grid(True)
         plt.tight_layout()

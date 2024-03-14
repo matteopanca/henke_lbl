@@ -274,24 +274,25 @@ def get_multiLayer(materials=('Si','Mo','SiO2'), period=6.9, gamma=0.4, rep=40, 
     
     return values
 
-def get_singleLayer(materials=('Au','Si'), thick=30, pol=1, energy=(85, 100, 100), angle=90, eV=True, plot=True):
+def get_singleLayer(materials=('Au','Si'), thick=30, roughness=(0, 0), pol=1, energy=(85, 100, 100), angle=90, eV=True, plot=True):
     """
     1) materials = (LAYER, SUBSTRATE)
     2) thickness in nm
-    3) (-1 < pol < 1) where s=1, p=-1 and unpolarized=0
-    4) The incidence angle is measured relative to the surface (NOT the surface normal)
-    5) energy in eV
-    6) angle in deg
+    3) roughness (LAYER, SUBSTRATE), in terms of sigma in nm
+    4) (-1 < pol < 1) where s=1, p=-1 and unpolarized=0
+    5) The incidence angle is measured relative to the surface (NOT the surface normal)
+    6) energy in eV
+    7) angle in deg
     """
 
     data = {}
     data['Layer'] = materials[0]
     data['Ldensity'] = '-1'
     data['Thick'] = str(thick)
-    data['Sigma1'] = '0'
+    data['Sigma1'] = str(roughness[0])
     data['Substrate'] = materials[1]
     data['Sdensity'] = '-1'
-    data['Sigma2'] = '0'
+    data['Sigma2'] = str(roughness[1])
     data['Pol'] = str(pol)
     if np.size(energy) == 3:
         data['Scan'] = 'Energy'
